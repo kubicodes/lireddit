@@ -42,7 +42,7 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
     @Arg("options") options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     if (options.username.length <= 2) {
       return {
@@ -87,13 +87,16 @@ export class UserResolver {
       }
     }
 
+    //store user id in session, set a cookie on the user and keep them logged in
+    req.session.userId = createdUser.id;
+
     return { user: createdUser };
   }
 
   @Mutation(() => UserResponse)
   async login(
     @Arg("options") options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     const matchedUser = await em.findOne(User, { username: options.username });
 
@@ -124,6 +127,7 @@ export class UserResolver {
       };
     }
 
+    req.session.userId = matchedUser.id;
     return { user: matchedUser };
   }
 }
