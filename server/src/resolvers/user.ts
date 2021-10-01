@@ -19,6 +19,8 @@ class UsernamePasswordInput {
   username: string;
   @Field()
   password: string;
+  @Field()
+  email: string;
 }
 
 @ObjectType()
@@ -66,6 +68,28 @@ export class UserResolver {
       };
     }
 
+    if (options.username.includes("@")) {
+      return {
+        errors: [
+          {
+            field: "username",
+            message: "username cannot include @",
+          },
+        ],
+      };
+    }
+
+    if (!options.email.includes("@")) {
+      return {
+        errors: [
+          {
+            field: "email",
+            message: "invalid e-mail address",
+          },
+        ],
+      };
+    }
+
     if (options.password.length <= 2) {
       return {
         errors: [
@@ -80,12 +104,14 @@ export class UserResolver {
     const hashedPassword = await argon2.hash(options.password);
     const createdUser = em.create(User, {
       username: options.username,
+      email: options.email,
       password: hashedPassword,
     });
 
     try {
       await em.persistAndFlush(createdUser);
     } catch (error) {
+      console.log(error);
       if (error.code === "23505") {
         return {
           errors: [
@@ -106,26 +132,29 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async login(
-    @Arg("options") options: UsernamePasswordInput,
+    @Arg("usernameOrEmail") usernameOrEmail: string,
+    @Arg("password") password: string,
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
-    const matchedUser = await em.findOne(User, { username: options.username });
+    const matchedUser = await em.findOne(
+      User,
+      usernameOrEmail.includes("@")
+        ? { email: usernameOrEmail }
+        : { username: usernameOrEmail }
+    );
 
     if (!matchedUser) {
       return {
         errors: [
           {
-            field: "username",
+            field: "usernameOrEmail",
             message: "User with this username doesn´t exist",
           },
         ],
       };
     }
 
-    const isPasswordValid = await argon2.verify(
-      matchedUser.password,
-      options.password
-    );
+    const isPasswordValid = await argon2.verify(matchedUser.password, password);
 
     if (!isPasswordValid) {
       return {

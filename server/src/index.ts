@@ -16,7 +16,6 @@ import cors from "cors";
 const main = async () => {
   const orm = await MikroORM.init(microConfig);
   await orm.getMigrator().up(); //run migrations before doing anything else
-
   const app = express();
 
   const RedisStore = connectRedis(session);
