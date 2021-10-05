@@ -11,7 +11,9 @@ import {
 import { User } from "../entities/User";
 import { MyContext } from "../types";
 import argon2 from "argon2";
-import { COOKIE_NAME } from "../constants";
+import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
+import { v4 } from "uuid";
+import { sendEmail } from "../utils/sendEmail";
 
 @InputType()
 class UsernamePasswordInput {
@@ -184,5 +186,88 @@ export class UserResolver {
         resolve(true);
       });
     });
+  }
+
+  @Mutation(() => Boolean)
+  async forgotPassword(
+    @Arg("email") email: string,
+    @Ctx() { em, redis }: MyContext
+  ): Promise<boolean> {
+    const matchedUser = await em.findOne(User, { email });
+
+    if (!matchedUser) {
+      //security just return true
+      return true;
+    }
+
+    const token = v4();
+
+    await redis.set(
+      FORGET_PASSWORD_PREFIX + token,
+      matchedUser.id,
+      "ex",
+      1000 * 60 * 60 * 24 * 3 //3days
+    );
+
+    await sendEmail(
+      email,
+      `<a href="http://localhost:3000/change-password/${token}">reset password</a>`
+    );
+
+    return true;
+  }
+
+  @Mutation(() => UserResponse)
+  async changePassword(
+    @Arg("token") token: string,
+    @Arg("newPassword") newPassword: string,
+    @Ctx() { em, redis, req }: MyContext
+  ): Promise<UserResponse> {
+    if (newPassword.length <= 2) {
+      return {
+        errors: [
+          {
+            field: "newPassword",
+            message: "length must be greater than 2",
+          },
+        ],
+      };
+    }
+
+    const keyToMatchOnRedis = FORGET_PASSWORD_PREFIX + token;
+    const matchedUserId = await redis.get(keyToMatchOnRedis);
+
+    if (!matchedUserId) {
+      return {
+        errors: [
+          {
+            field: "token",
+            message: "token expired",
+          },
+        ],
+      };
+    }
+
+    const matchedUser = await em.findOne(User, { id: parseInt(matchedUserId) });
+
+    if (!matchedUser) {
+      return {
+        errors: [
+          {
+            field: "token",
+            message: "user no longer exists",
+          },
+        ],
+      };
+    }
+
+    matchedUser.password = await argon2.hash(newPassword);
+
+    await em.persistAndFlush(matchedUser);
+    await redis.del(keyToMatchOnRedis);
+    //login after successfully changed password
+    req.session.userId = matchedUser.id;
+
+    return { user: matchedUser };
   }
 }
