@@ -1,27 +1,21 @@
-import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Mutation, Query, Resolver } from "type-graphql";
 import { Post } from "../entities/Post";
-import { MyContext } from "../types";
 
 @Resolver()
 export class PostResolver {
   @Query(() => [Post])
-  posts(@Ctx() { em }: MyContext): Promise<Post[]> {
-    return em.find(Post, {});
+  posts(): Promise<Post[]> {
+    return Post.find();
   }
 
   @Query(() => Post, { nullable: true })
-  post(@Arg("id") id: number, @Ctx() { em }: MyContext): Promise<Post | null> {
-    return em.findOne(Post, { id });
+  post(@Arg("id") id: number): Promise<Post | undefined> {
+    return Post.findOne({ id });
   }
 
   @Mutation(() => Post)
-  async createPost(
-    @Arg("title") title: string,
-    @Ctx() { em }: MyContext
-  ): Promise<Post> {
-    const createdPost = em.create(Post, { title });
-    await em.persistAndFlush(createdPost);
-    return createdPost;
+  async createPost(@Arg("title") title: string): Promise<Post> {
+    return Post.create({ title }).save();
   }
 
   @Mutation(() => Post, { nullable: true })
@@ -30,28 +24,22 @@ export class PostResolver {
     /**
      * If an Arg is optional you can declare it as nullable, but then you have to give the exact return type
      */
-    @Arg("title", () => String, { nullable: true }) title: string,
-    @Ctx() { em }: MyContext
+    @Arg("title", () => String, { nullable: true }) title: string
   ): Promise<Post | null> {
-    const post = await em.findOne(Post, { id });
+    const post = await Post.findOne(id);
     if (!post) {
       return null;
     }
-    if (typeof title !== "undefined") post.title = title;
-    await em.persistAndFlush(post);
+    if (typeof title !== "undefined") {
+      await Post.update({ id }, { title });
+    }
+
     return post;
   }
 
   @Mutation(() => Boolean)
-  async deletePost(
-    @Arg("id") id: number,
-    @Ctx() { em }: MyContext
-  ): Promise<boolean> {
-    try {
-      await em.nativeDelete(Post, { id });
-      return true;
-    } catch (error) {
-      return false;
-    }
+  async deletePost(@Arg("id") id: number): Promise<boolean> {
+    await Post.delete(id);
+    return true;
   }
 }
