@@ -14,6 +14,7 @@ import { createConnection } from "typeorm";
 import { Post } from "./entities/Post";
 import { User } from "./entities/User";
 import dotenv from "dotenv";
+import path from "path";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ const main = async () => {
     database: "lireddit2",
     logging: true,
     synchronize: true,
+    migrations: [path.join(__dirname, "./migrations/*")],
     entities: [Post, User],
   });
   const app = express();
