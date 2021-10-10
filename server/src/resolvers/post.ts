@@ -3,6 +3,7 @@ import {
   Ctx,
   Field,
   InputType,
+  Int,
   Mutation,
   Query,
   Resolver,
@@ -11,6 +12,7 @@ import {
 import { Post } from "../entities/Post";
 import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "../types";
+import { getConnection, SelectQueryBuilder } from "typeorm";
 
 @InputType()
 class PostInput {
@@ -23,8 +25,24 @@ class PostInput {
 @Resolver()
 export class PostResolver {
   @Query(() => [Post])
-  posts(): Promise<Post[]> {
-    return Post.find();
+  async posts(
+    @Arg("limit", () => Int) limit: number,
+    @Arg("cursor", () => String, { nullable: true }) cursor: string | null
+  ): Promise<Post[]> {
+    const realLimit: number = Math.min(50, limit);
+    const query: SelectQueryBuilder<Post> = getConnection()
+      .getRepository(Post)
+      .createQueryBuilder("p")
+      .orderBy('"createdAt"', "DESC")
+      .take(realLimit);
+
+    if (cursor) {
+      query.where('"createdAt" < :cursor', {
+        cursor: new Date(parseInt(cursor)),
+      });
+    }
+
+    return query.getMany();
   }
 
   @Query(() => Post, { nullable: true })
