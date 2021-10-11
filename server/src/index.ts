@@ -10,7 +10,7 @@ import session from "express-session";
 import { __prod__, COOKIE_NAME } from "./constants";
 import { MyContext } from "./types";
 import cors from "cors";
-import { createConnection } from "typeorm";
+import { createConnection, getConnection } from "typeorm";
 import { Post } from "./entities/Post";
 import { User } from "./entities/User";
 import dotenv from "dotenv";
@@ -19,7 +19,7 @@ import path from "path";
 dotenv.config();
 
 const main = async () => {
-  await createConnection({
+  const conn = await createConnection({
     type: "postgres",
     database: "lireddit2",
     logging: true,
@@ -27,6 +27,9 @@ const main = async () => {
     migrations: [path.join(__dirname, "./migrations/*")],
     entities: [Post, User],
   });
+
+  conn.runMigrations();
+
   const app = express();
 
   const RedisStore = connectRedis(session);

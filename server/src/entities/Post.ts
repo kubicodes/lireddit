@@ -36,11 +36,11 @@ export class Post extends BaseEntity {
   @Column({ type: "int", default: 0 })
   points!: number;
 
-  @Field()
+  @Field(() => String)
   @CreateDateColumn()
   createdAt: Date;
 
-  @Field()
+  @Field(() => String)
   @UpdateDateColumn()
   updatedAt: Date;
 }
