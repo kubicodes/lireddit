@@ -12,9 +12,14 @@ import {
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { Layout } from "../components/Layout";
+import { useState } from "react";
 
 const Index = () => {
   const [{ data, fetching }] = usePostsQuery({ variables: { limit: 10 } });
+  const [paginationVariables, setPaginationVariables] = useState({
+    limit: 10,
+    cursor: null as null | string,
+  });
 
   if (!fetching && !data) {
     return <div>there went something wrong with your query</div>;
@@ -43,7 +48,18 @@ const Index = () => {
       )}
       {data ? (
         <Flex>
-          <Button isLoading={fetching} m="auto" my={8} colorScheme="cyan">
+          <Button
+            onClick={() =>
+              setPaginationVariables({
+                limit: paginationVariables.limit,
+                cursor: data.posts[data.posts.length - 1].createdAt,
+              })
+            }
+            isLoading={fetching}
+            m="auto"
+            my={8}
+            colorScheme="cyan"
+          >
             load more
           </Button>
         </Flex>
