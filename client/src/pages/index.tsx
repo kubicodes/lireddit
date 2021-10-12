@@ -16,10 +16,12 @@ import { useState } from "react";
 
 const Index = () => {
   const [paginationVariables, setPaginationVariables] = useState({
-    limit: 10,
+    limit: 15,
     cursor: null as null | string,
   });
-  const [{ data, fetching }] = usePostsQuery({ variables: paginationVariables });
+  const [{ data, fetching }] = usePostsQuery({
+    variables: paginationVariables,
+  });
 
   if (!fetching && !data) {
     return <div>there went something wrong with your query</div>;
@@ -40,7 +42,8 @@ const Index = () => {
         <Stack spacing={8}>
           {data!.posts.posts.map((post) => (
             <Box key={post.id} p={5} shadow="md" borderWidth="1px">
-              <Heading fontSize="xl">{post.title}</Heading>
+              <Heading fontSize="xl">{post.title}</Heading>{" "}
+              <Text>posted by {post.creator.username}</Text>
               <Text mt={4}>{post.textSnippet}</Text>
             </Box>
           ))}
