@@ -12,7 +12,8 @@ import {
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { Layout } from "../components/Layout";
-import { useState } from "react";
+import React, { useState } from "react";
+import { UpdootSection } from "../components/UpdootSection";
 
 const Index = () => {
   const [paginationVariables, setPaginationVariables] = useState({
@@ -41,11 +42,14 @@ const Index = () => {
       ) : (
         <Stack spacing={8}>
           {data!.posts.posts.map((post) => (
-            <Box key={post.id} p={5} shadow="md" borderWidth="1px">
-              <Heading fontSize="xl">{post.title}</Heading>{" "}
-              <Text>posted by {post.creator.username}</Text>
-              <Text mt={4}>{post.textSnippet}</Text>
-            </Box>
+            <Flex key={post.id} p={5} shadow="md" borderWidth="1px">
+              <UpdootSection post={post} />
+              <Box>
+                <Heading fontSize="xl">{post.title}</Heading>
+                <Text>posted by {post.creator.username}</Text>
+                <Text mt={4}>{post.textSnippet}</Text>
+              </Box>
+            </Flex>
           ))}
         </Stack>
       )}
