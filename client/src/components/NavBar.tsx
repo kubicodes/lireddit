@@ -1,6 +1,6 @@
 import React from "react";
 import { useLogoutMutation, useMeQuery } from "../generated/graphql";
-import { Box, Button, Flex, Link } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Link } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { isServer } from "../utils/isServer";
 
@@ -8,7 +8,7 @@ export const NavBar: React.FC<{}> = () => {
   const [{ data, fetching }] = useMeQuery({
     pause: isServer(), //stop execution on SSR
   });
-  const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
+  const [_, logout] = useLogoutMutation();
   let body = null;
   if (!data?.me) {
     body = (
@@ -33,7 +33,12 @@ export const NavBar: React.FC<{}> = () => {
   }
 
   return (
-    <Flex zIndex={1} position="sticky" top={0} bg="tan" p={4}>
+    <Flex zIndex={1} position="sticky" top={0} bg="tan" p={4} align="center">
+      <NextLink href="/">
+        <Link>
+          <Heading>LiReddit</Heading>
+        </Link>
+      </NextLink>
       <Box ml={"auto"}>{body}</Box>
     </Flex>
   );
