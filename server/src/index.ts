@@ -8,7 +8,6 @@ import connectRedis from "connect-redis";
 import Redis from "ioredis";
 import session from "express-session";
 import { __prod__, COOKIE_NAME } from "./constants";
-import { MyContext } from "./types";
 import cors from "cors";
 import { createConnection } from "typeorm";
 import { Post } from "./entities/Post";
@@ -16,6 +15,8 @@ import { User } from "./entities/User";
 import dotenv from "dotenv";
 import path from "path";
 import { Updoot } from "./entities/Updoot";
+import { createUserLoader } from "./utils/createUserLoader";
+import { createUpdootLoader } from "./utils/createUpdootLoader";
 
 dotenv.config();
 
@@ -64,7 +65,13 @@ const main = async () => {
       resolvers: [PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }) => <MyContext>{ req, res, redis },
+    context: ({ req, res }) => ({
+      req,
+      res,
+      redis,
+      userLoader: createUserLoader(),
+      updootLoader: createUpdootLoader(),
+    }),
   });
 
   await apolloServer.start();

@@ -3,12 +3,15 @@ import { useLogoutMutation, useMeQuery } from "../generated/graphql";
 import { Box, Button, Flex, Heading, Link } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { isServer } from "../utils/isServer";
+import { useRouter } from "next/router";
 
 export const NavBar: React.FC<{}> = () => {
   const [{ data, fetching }] = useMeQuery({
     pause: isServer(), //stop execution on SSR
   });
   const [_, logout] = useLogoutMutation();
+  const router = useRouter();
+
   let body = null;
   if (!data?.me) {
     body = (
@@ -30,7 +33,13 @@ export const NavBar: React.FC<{}> = () => {
           </Button>
         </NextLink>
         <Box mr={2}>{data.me.username}</Box>
-        <Button variant="link" onClick={() => logout()}>
+        <Button
+          variant="link"
+          onClick={async () => {
+            await logout();
+            router.reload();
+          }}
+        >
           logout
         </Button>
       </Flex>
