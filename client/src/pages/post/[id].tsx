@@ -1,22 +1,13 @@
-import { Heading } from "@chakra-ui/layout";
+import { Box, Heading } from "@chakra-ui/layout";
 import { withUrqlClient } from "next-urql";
-import { useRouter } from "next/router";
 import React from "react";
+import { EditAndDeletePostButtons } from "../../components/EditAndDeletePostButtons";
 import { Layout } from "../../components/Layout";
-import { usePostQuery } from "../../generated/graphql";
 import { createUrqlClient } from "../../utils/createUrqlClient";
+import { useGetPostFromUrl } from "../../utils/useGetPostFromUrl";
 
 const Post = ({}) => {
-  const router = useRouter();
-  const postId =
-    typeof router.query.id === "string" ? parseInt(router.query.id) : -1;
-
-  const [{ data, fetching, error }] = usePostQuery({
-    pause: postId === -1,
-    variables: {
-      id: postId,
-    },
-  });
+  const [{ data, fetching, error }] = useGetPostFromUrl();
 
   if (fetching) {
     return (
@@ -37,7 +28,7 @@ const Post = ({}) => {
   if (!data?.post) {
     return (
       <Layout>
-        <div>Could not find post with Id {postId}</div>
+        <div>Could not find post</div>
       </Layout>
     );
   }
@@ -45,7 +36,11 @@ const Post = ({}) => {
   return (
     <Layout>
       <Heading mb={4}>{data.post.title}</Heading>
-      {data.post.text}
+      <Box mb={4}>{data.post.text}</Box>
+      <EditAndDeletePostButtons
+        postId={data.post.id}
+        creatorId={data.post.creator.id}
+      />
     </Layout>
   );
 };
