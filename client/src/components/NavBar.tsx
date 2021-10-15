@@ -23,7 +23,12 @@ export const NavBar: React.FC<{}> = () => {
     );
   } else {
     body = (
-      <Flex>
+      <Flex align="center">
+        <NextLink href="/create-post">
+          <Button as={Link} mr={4}>
+            create post
+          </Button>
+        </NextLink>
         <Box mr={2}>{data.me.username}</Box>
         <Button variant="link" onClick={() => logout()}>
           logout
