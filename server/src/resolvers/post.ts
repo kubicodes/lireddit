@@ -10,14 +10,14 @@ import {
   Query,
   Resolver,
   Root,
-  UseMiddleware,
+  UseMiddleware
 } from "type-graphql";
+import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
-import { isAuth } from "../middleware/isAuth";
-import { MyContext } from "../types";
-import { getConnection, In } from "typeorm";
 import { Updoot } from "../entities/Updoot";
 import { User } from "../entities/User";
+import { isAuth } from "../middleware/isAuth";
+import { MyContext } from "../types";
 
 @InputType()
 class PostInput {
@@ -51,7 +51,6 @@ export class PostResolver {
   async posts(
     @Arg("limit", () => Int) limit: number,
     @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-    @Ctx() { req }: MyContext
   ): Promise<PaginatedPosts> {
     const realLimit = Math.min(50, limit);
     const reaLimitPlusOne = realLimit + 1;
